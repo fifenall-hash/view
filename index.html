@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <!-- 모바일 기기에서 올바른 비율과 CSS 픽셀을 적용하기 위한 필수 메타 태그 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기기 해상도 확인</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 2rem 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+        .label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 1rem;
+        }
+        .size-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #007bff;
+            margin: 0.5rem 0 1.5rem 0;
+        }
+        .size-display.screen {
+            font-size: 1.8rem;
+            color: #28a745;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>디스플레이 CSS 크기</h1>
+        
+        <div class="label">뷰포트 크기 (현재 브라우저 창)</div>
+        <div class="size-display" id="viewport-size">측정 중...</div>
+
+        <div class="label">화면 전체 크기 (기기 해상도)</div>
+        <div class="size-display screen" id="screen-size">측정 중...</div>
+    </div>
+
+    <script>
+        function updateDisplaySizes() {
+            // 1. 뷰포트 크기 (스크롤바를 제외한 실제 웹페이지가 표시되는 영역)
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            document.getElementById('viewport-size').innerText = `${viewportWidth} × ${viewportHeight}`;
+
+            // 2. 스크린 크기 (기기 모니터/액정의 전체 논리적 크기)
+            const screenWidth = window.screen.width;
+            const screenHeight = window.screen.height;
+            document.getElementById('screen-size').innerText = `${screenWidth} × ${screenHeight}`;
+        }
+
+        // 페이지가 처음 열릴 때 크기 측정
+        updateDisplaySizes();
+
+        // 사용자가 창 크기를 조절하거나 기기를 가로/세로로 회전할 때마다 업데이트
+        window.addEventListener('resize', updateDisplaySizes);
+    </script>
+
+</body>
+</html>
