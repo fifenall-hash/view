@@ -2,105 +2,383 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>기기 해상도 및 정보 확인</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Let's Number!</title>
     <style>
+        /* CSS 변수 초기화 */
+        :root {
+            --k: 1px; /* JS에서 이 값을 동적으로 덮어씁니다. */
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+        }
+
+        #app-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #333;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        /* ---------------------------------------------------
+           [핵심] k 배수를 기반으로 한 16:9 메인 컨테이너
+        --------------------------------------------------- */
+        #app-container {
+            width: calc(var(--k) * 16);
+            height: calc(var(--k) * 9);
+            background-color: #f5f5f5;
+            
+            /* 16k를 3.5k(메뉴), 9.5k(중앙), 3k(트레이)로 분할 */
+            display: grid;
+            grid-template-columns: calc(var(--k) * 3.5) calc(var(--k) * 9.5) calc(var(--k) * 3);
+            
+            overflow: hidden;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* 하단 안전 영역 */
+        #bottom-safe-area {
+            width: 100%;
+            background-color: #000;
+        }
+
+        /* ---------------------------------------------------
+           k 배수 적용 내부 스타일
+        --------------------------------------------------- */
+        #menu-frame {
+            background-color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f8f9fa;
-            color: #333;
-            padding: 1rem;
+            box-shadow: calc(var(--k) * 0.1) 0 calc(var(--k) * 0.3) rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .menu-logo {
+            width: calc(var(--k) * 2.5);
+            margin-bottom: calc(var(--k) * 0.8);
+            object-fit: contain;
+        }
+
+        .menu-btn {
+            width: calc(var(--k) * 2.8);
+            padding: calc(var(--k) * 0.3);
+            margin: calc(var(--k) * 0.15) 0;
+            font-size: calc(var(--k) * 0.35);
+            font-weight: bold;
+            background-color: #e0e0e0;
+            border: none;
+            border-radius: calc(var(--k) * 0.2);
+            cursor: pointer;
+        }
+
+        .menu-btn.completed { background-color: #A0E8AF; color: black; }
+
+        #game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: calc(var(--k) * 0.5);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        #banner-area {
+            padding: calc(var(--k) * 0.5) calc(var(--k) * 0.5) calc(var(--k) * 0.5) 0;
             box-sizing: border-box;
         }
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            text-align: center;
+
+        #banner-frame {
             width: 100%;
-            max-width: 500px; /* PC 화면에서 너무 넓어지지 않도록 제한 */
+            height: 100%;
+            background-color: #D2B48C;
+            border: calc(var(--k) * 0.1) solid #8B4513;
+            border-radius: calc(var(--k) * 0.2);
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            padding: calc(var(--k) * 0.2);
+            box-sizing: border-box;
         }
-        h1 {
-            font-size: 1.5rem;
-            margin-top: 0;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 0.5rem;
+
+        .banner-item {
+            width: calc(var(--k) * 1);
+            height: calc(var(--k) * 1);
+            margin: calc(var(--k) * 0.08);
+            background-size: cover;
         }
-        .label {
-            font-size: 0.9rem;
-            color: #6c757d;
-            margin-top: 1.5rem;
+
+        .question-text {
+            font-size: calc(var(--k) * 0.7);
             font-weight: bold;
+            margin-bottom: calc(var(--k) * 0.5);
+            text-align: center;
         }
-        .size-display {
-            font-size: 2.2rem;
+
+        .items-tray {
+            display: flex;
+            gap: calc(var(--k) * 0.2);
+            margin-top: calc(var(--k) * 0.5);
+            background: rgba(255, 255, 255, 0.7);
+            padding: calc(var(--k) * 0.2);
+            border-radius: calc(var(--k) * 0.3);
+        }
+
+        .draggable-item {
+            width: calc(var(--k) * 1.2);
+            height: calc(var(--k) * 1.2);
+            cursor: pointer;
+        }
+
+        #drop-zone {
+            width: calc(var(--k) * 6);
+            height: calc(var(--k) * 4);
+            border: calc(var(--k) * 0.05) dashed #ccc;
+            border-radius: calc(var(--k) * 0.4);
+            position: relative;
+            display: flex;
+            flex-wrap: wrap-reverse;
+            align-content: flex-start;
+            padding: calc(var(--k) * 0.2);
+            gap: calc(var(--k) * 0.2);
+        }
+
+        .placed-item {
+            width: calc(var(--k) * 1.2);
+            height: calc(var(--k) * 1.2);
+        }
+
+        .submit-btn {
+            padding: calc(var(--k) * 0.2) calc(var(--k) * 0.8);
+            font-size: calc(var(--k) * 0.5);
             font-weight: bold;
-            color: #007bff;
-            margin: 0.5rem 0 0 0;
+            background-color: #FFD700;
+            border: none;
+            border-radius: calc(var(--k) * 0.3);
+            margin-top: calc(var(--k) * 0.5);
+            cursor: pointer;
         }
-        .size-display.screen {
-            font-size: 1.8rem;
-            color: #28a745;
-        }
-        .user-agent-box {
-            font-size: 0.85rem;
-            color: #495057;
-            background-color: #f1f3f5;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 0.5rem;
-            text-align: left;
-            word-break: break-all; /* 긴 문자열이 박스를 벗어나지 않고 줄바꿈되도록 설정 */
-            line-height: 1.5;
-            border: 1px solid #dee2e6;
+
+        .options-bar {
+            display: flex;
+            gap: calc(var(--k) * 0.3);
+            margin-bottom: calc(var(--k) * 0.3);
+            align-items: center;
+            font-weight: bold;
+            font-size: calc(var(--k) * 0.3);
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>디스플레이 & 기기 정보</h1>
-        
-        <div class="label">뷰포트 크기 (현재 브라우저 창)</div>
-        <div class="size-display" id="viewport-size">측정 중...</div>
+    <div id="app-wrapper">
+        <div id="app-container">
+            <div id="menu-frame">
+                <img src="images/로고.png" alt="Let's Number Logo" class="menu-logo" onerror="this.src=''">
+                <button class="menu-btn" onclick="startGame('숫자 세기 놀이')">숫자 세기 놀이</button>
+                <button class="menu-btn" onclick="startGame('더하기 놀이')">더하기 놀이</button>
+                <button class="menu-btn" onclick="startGame('빼기 놀이')">빼기 놀이</button>
+                <button class="menu-btn" onclick="startGame('곱하기 놀이')">곱하기 놀이</button>
+                <button class="menu-btn" onclick="startGame('시계 보기 놀이')">시계 보기 놀이</button>
+            </div>
 
-        <div class="label">화면 전체 크기 (기기 해상도)</div>
-        <div class="size-display screen" id="screen-size">측정 중...</div>
-
-        <div class="label">User-Agent (브라우저/OS 정보)</div>
-        <div class="user-agent-box" id="user-agent-text">측정 중...</div>
+            <div id="game-area">
+                <h1 style="color: #888; text-align: center;">왼쪽에서 메뉴를 선택하세요.</h1>
+            </div>
+            
+            <div id="banner-area">
+                <div id="banner-frame"></div>
+            </div>
+        </div>
     </div>
 
-    <script>
-        function updateDisplaySizes() {
-            // 1. 뷰포트 크기
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-            document.getElementById('viewport-size').innerText = `${viewportWidth} × ${viewportHeight}`;
+    <!-- 동적으로 크기가 조정될 안전 영역 -->
+    <div id="bottom-safe-area"></div>
 
-            // 2. 스크린 크기
-            const screenWidth = window.screen.width;
-            const screenHeight = window.screen.height;
-            document.getElementById('screen-size').innerText = `${screenWidth} × ${screenHeight}`;
+    <audio id="bgm-player" loop>
+        <source src="sounds_basic/bgm.wav" type="audio/wav">
+    </audio>
+
+<script>
+    // ==========================================
+    // [핵심] k 배수 레이아웃 연산 엔진
+    // ==========================================
+    function calculateLayout() {
+        const ua = navigator.userAgent;
+        // 1. Windows 또는 Mobile 기기인지 확인
+        const isWindowsOrMobile = /Windows|Mobile/i.test(ua);
+        
+        const safeAreaEl = document.getElementById('bottom-safe-area');
+        let safeAreaHeight = 0;
+        
+        // 2. 조건에 따른 안전바 영역 설정
+        if (isWindowsOrMobile) {
+            safeAreaEl.style.display = 'none';
+        } else {
+            safeAreaEl.style.display = 'block';
+            safeAreaHeight = window.innerHeight * 0.08; // 뷰포트 높이의 8%
+            safeAreaEl.style.height = `${safeAreaHeight}px`;
         }
+        
+        // 3. 실제 사용 가능한 너비와 높이 산출
+        const availableWidth = window.innerWidth;
+        const availableHeight = window.innerHeight - safeAreaHeight;
+        
+        // 4. 반복문 없이 단번에 가장 큰 k값 도출 (소수점 버림)
+        let k = Math.floor(Math.min(availableWidth / 16, availableHeight / 9));
+        
+        // k가 1 미만으로 떨어져 레이아웃이 붕괴되는 것을 방지
+        k = Math.max(1, k);
+        
+        // 5. 계산된 k값을 CSS 변수로 전달
+        document.documentElement.style.setProperty('--k', `${k}px`);
+    }
 
-        // 3. User-Agent 문자열 가져오기 (창 크기가 변해도 값은 같으므로 한 번만 실행)
-        document.getElementById('user-agent-text').innerText = navigator.userAgent;
+    // 창 크기 변경 시 즉시 재계산
+    window.addEventListener('resize', calculateLayout);
+    // 최초 진입 시 계산 실행
+    calculateLayout();
 
-        // 페이지 로드 시 크기 측정
-        updateDisplaySizes();
+    // ==========================================
+    // 게임 상태 및 로직 (기존과 동일)
+    // ==========================================
+    const items = ['단추', '딸기', '블록', '빗', '빵', '수박', '숟가락', '연필', '자동차', '칫솔'];
+    const solvedItems = { '숫자 세기 놀이': [], '더하기 놀이': [], '빼기 놀이': [], '곱하기 놀이': [], '시계 보기 놀이': [] };
 
-        // 화면 크기 조절이나 회전 시 크기 업데이트
-        window.addEventListener('resize', updateDisplaySizes);
-    </script>
+    let currentGame = null;
+    let targetItem = "";
+    let targetNumber = 0;
+    let placedItemsCount = 0;
+    let soundType = "고유어"; 
+    let soundEnabled = true;
+
+    const koreanNumbers = {1: "하나", 2: "둘", 3: "셋", 4: "넷", 5: "다섯", 6: "여섯", 7: "일곱", 8: "여덟", 9: "아홉", 10: "열", 11: "열하나", 12: "열둘", 13: "열셋", 14: "열넷", 15: "열다섯", 16: "열여섯", 17: "열일곱", 18: "열여덟", 19: "열아홉", 20: "스물"};
+    const sinoNumbers = {1: "일", 2: "이", 3: "삼", 4: "사", 5: "오", 6: "육", 7: "칠", 8: "팔", 9: "구", 10: "십", 11: "십일", 12: "십이", 13: "십삼", 14: "십사", 15: "십오", 16: "십육", 17: "십칠", 18: "십팔", 19: "십구", 20: "이십"};
+
+    let currentAudio = null;
+    function playSound(fileName) {
+        if (currentAudio) currentAudio.pause();
+        const folder = (/^\d+/.test(fileName) || /\[고유어\]/.test(fileName)) ? 'sounds_number/' : 'sounds_basic/';
+        currentAudio = new Audio(folder + fileName);
+        currentAudio.play().catch(e => console.log("Audio error:", e));
+        return currentAudio;
+    }
+
+    function playSoundSequence(fileNames) {
+        if (fileNames.length === 0) return;
+        const audio = playSound(fileNames[0]);
+        audio.onended = () => playSoundSequence(fileNames.slice(1));
+    }
+
+    document.body.addEventListener('click', () => {
+        const bgm = document.getElementById('bgm-player');
+        if (bgm.paused) bgm.play().catch(e => console.log("BGM error", e));
+    }, { once: true });
+
+    function startGame(gameName) {
+        currentGame = gameName;
+        updateBanner();
+        if (gameName === '숫자 세기 놀이') initCountingGame();
+        else document.getElementById('game-area').innerHTML = `<h1 style="color: #888; font-size: calc(var(--k) * 0.7);">${gameName} 준비 중!</h1>`;
+    }
+
+    function initCountingGame() {
+        const availableItems = items.filter(i => !solvedItems['숫자 세기 놀이'].includes(i));
+        if (availableItems.length === 0) return showCompletionScreen('숫자 세기 놀이');
+        
+        targetItem = availableItems[Math.floor(Math.random() * availableItems.length)];
+        targetNumber = Math.floor(Math.random() * 20) + 1;
+        placedItemsCount = 0;
+
+        document.getElementById('game-area').innerHTML = `
+            <div class="options-bar">
+                <label><input type="checkbox" checked onchange="soundEnabled = this.checked"> 수 세는 소리</label>
+                <label><input type="radio" name="sndType" value="고유어" checked onchange="soundType = this.value"> 고유어</label>
+                <label><input type="radio" name="sndType" value="한자어" onchange="soundType = this.value"> 한자어</label>
+            </div>
+            <div class="question-text" onclick="replayQuestion()">${targetItem} ${targetNumber}개 줄래?</div>
+            <div id="drop-zone" onclick="placeItem()"></div>
+            <div class="items-tray">
+                ${availableItems.map(item => `<img src="images/${item}.png" class="draggable-item" onclick="selectItem('${item}')" onerror="this.src=''">`).join('')}
+            </div>
+            <button class="submit-btn" onclick="checkCountingAnswer()">전달</button>
+        `;
+        playSoundSequence([`${targetItem}.wav`, `${targetNumber}개줄래.wav`]);
+    }
+
+    let selectedItemForPlacement = null;
+    function selectItem(itemName) {
+        selectedItemForPlacement = itemName;
+        document.getElementById('drop-zone').style.cursor = `url('images/${itemName}.png') 30 30, pointer`;
+    }
+
+    function placeItem() {
+        if (!selectedItemForPlacement || placedItemsCount >= 20) return;
+        placedItemsCount++;
+        const img = document.createElement('img');
+        img.src = `images/${selectedItemForPlacement}.png`;
+        img.className = 'placed-item';
+        img.oncontextmenu = (e) => { e.preventDefault(); if(placedItemsCount > 0){ img.remove(); placedItemsCount--; } };
+        document.getElementById('drop-zone').appendChild(img);
+        
+        if (soundEnabled) playSound(`${soundType === "고유어" ? koreanNumbers[placedItemsCount] : sinoNumbers[placedItemsCount]}.wav`);
+    }
+
+    function replayQuestion() { playSoundSequence([`${targetItem}.wav`, `${targetNumber}개줄래.wav`]); }
+
+    function checkCountingAnswer() {
+        const dropZoneItems = document.getElementById('drop-zone').children;
+        let isCorrect = dropZoneItems.length === targetNumber && Array.from(dropZoneItems).every(img => img.src.includes(targetItem));
+        
+        if (isCorrect) {
+            playSound('고마워.wav');
+            solvedItems['숫자 세기 놀이'].push(targetItem);
+            updateBanner();
+            setTimeout(initCountingGame, 2000);
+        } else {
+            playSound('다시해보자.wav');
+            document.querySelector('.question-text').innerText = "다시 해보자.";
+            setTimeout(() => {
+                document.querySelector('.question-text').innerText = `${targetItem} ${targetNumber}개 줄래?`;
+                document.getElementById('drop-zone').innerHTML = '';
+                placedItemsCount = 0;
+            }, 2000);
+        }
+    }
+
+    function updateBanner() {
+        const banner = document.getElementById('banner-frame');
+        banner.innerHTML = '';
+        (solvedItems[currentGame] || []).forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'banner-item';
+            div.style.backgroundImage = `url('images/${item}.png')`;
+            banner.appendChild(div);
+        });
+    }
+
+    function showCompletionScreen(gameName) {
+        document.getElementById('game-area').innerHTML = `<h1 style="font-size: calc(var(--k) * 1); color: black;">다 했어. 고마워!</h1><p style="font-size: calc(var(--k) * 0.5); color: blue;">🎉 ${gameName} 마스터! 🎉</p>`;
+        playSound('다했어고마워.wav');
+        document.querySelectorAll('.menu-btn').forEach(btn => { if(btn.innerText.includes(gameName)) btn.classList.add('completed'); });
+    }
+</script>
 
 </body>
 </html>
